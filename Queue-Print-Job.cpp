@@ -2,7 +2,7 @@
 
 const int MAX_JOBS = 10;
 
-enum JobStatus{
+enum class JobStatus{
 	Accepted = 0,
 	Denied
 };
@@ -52,7 +52,7 @@ int main(){
 
 Job::Job(){
 	jobName = "";
-	status = Denied;
+	status = JobStatus::Denied;
 	trackingNumber = -1;
 };
 
@@ -133,4 +133,18 @@ bool PrintJobs::IsValidName(std::string name)const{
 
 bool PrintJobs::IsNotFull() const{
 	return jobsInQueue < MAX_JOBS - 1;
+}
+
+
+// Capitalizes letter unless a number
+char PrintJobs::CaptializeChar(char letter){
+	char newChar;
+
+	if(letter >= 'a' && letter <= 'z')
+		newChar = letter + 32;
+
+	if(letter >= '0' && letter <= '9')
+		newChar = letter;
+	
+	return newChar;
 }
