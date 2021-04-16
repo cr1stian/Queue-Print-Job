@@ -47,6 +47,7 @@ public:
 	void RequestJob(); // Request a job from user
 	void ExecuteJob(); // Executeds a job from Queue
 	void DisplayRequestData() const; // Displays records of Jobs completed, denied, in Queue
+	Job Pop(); // Removes first item in Queue
 	bool IsValidName(std::string name) const; // Checks for validity of given name
 	bool IsNotFull() const; // Returns true if queue is not full
 	std::string CaptializeStr(std::string lowerStr); // Returns capitalized String
@@ -55,54 +56,29 @@ public:
 };
 
 int main(){
-
-
-
 	int MenuOption = -1;
-
 	PrintJobs newPrinter;
 
 	MenuOption = newPrinter.Menu();
-	
-	while( MenuOption != Menu::Quit){
+	while( MenuOption != Menu::Quit ){
 		switch( MenuOption ){
-			case 1:
+			case Menu::Request:
 				newPrinter.RequestJob();
 				break;
-			case 2:
+			case Menu::Execute:
 				newPrinter.ExecuteJob();
 				break;
-			case 3:
+			case Menu::Data:
 				newPrinter.DisplayRequestData();
 				break;
 			default:
-				std::cout << "Error Ocurred\n";
+				std::cout << "Error Ocurred - Try Again\n";
 				break;
 		}
+		std::cout << '\n';
 		MenuOption = newPrinter.Menu();
-	
+
 	}
-
-
-
-
-	/*
-	PrintJobs newInstance;
-	Job newJob;
-	std::cout << newJob.GetName();
-	newJob.SetTrackingNum();
-	std::cout << "\n" << newJob.GetTracking();
-
-	std::string name = "crIst1an H";
-
-	std::cout << "\n" << newInstance.IsValidName(name);
-	std::cout << "\n" << newInstance.CaptializeStr(name);
-	std::cout << "\n" << name;
-
-
-	newInstance.RequestJob();
-	newInstance.DisplayRequestData();
-	*/
 }
 
 // *** Job Class ***
@@ -160,33 +136,61 @@ void PrintJobs::RequestJob(){
 
 	if( IsNotFull() ){
 		std::cout << "Enter Job Name: ";
-		std::cin >> jobName;
+		std::cin.ignore();
+		std::getline(std::cin, jobName);
 
 		if( IsValidName(jobName) ){
+			jobName = CaptializeStr(jobName);
 			newJob.SetName(jobName);
 			newJob.SetTrackingNum();
 			newJob.SetStatus(JobStatus::Accepted);
 
-			queuedJobs[++jobsInQueue] = newJob;
+			confirmation = "\nJob Name: " + newJob.GetName() + "\nJob Status: Accepted\nTracking #: " + std::to_string(newJob.GetTracking()) + " \nPosition in Queue: " + std::to_string(jobsInQueue + 1) + "\n";
 
-			confirmation = "Job Status: Accepted \nTracking #: " + std::to_string(newJob.GetTracking()) + " \nPosition in Queue: " + std::to_string(jobsInQueue);
+			queuedJobs[jobsInQueue++] = newJob;
 		}
 		else{
-			confirmation = "Job Status: Denied\nReason: Invalid Name";
+			confirmation = "\nJob Status: Denied\nReason: Invalid Name";
 			numDeniedJobs++;
 		}
 	}
 	else{
-		confirmation = "Job Status: Denied\nReason: Print Queue is Full";
+		confirmation = "\nJob Status: Denied\nReason: Print Queue is Full";
 		numDeniedJobs++;
 	}
 
-	std::cout << confirmation;
+	std::cout << confirmation << std::endl;
 }
+
+// Returns the first object from the queue and moves queue up
+Job PrintJobs::Pop(){
+	Job currentJob(queuedJobs[0]);
+	Job tempJob;
+
+	for( int pos(0); pos < jobsInQueue; pos++ ){
+		tempJob = queuedJobs[pos + 1];
+		queuedJobs[pos] = tempJob;
+	}
+	return currentJob;
+}
+
 
 // Removes the oldest Job on the ueue
 void PrintJobs::ExecuteJob(){
+	std::string confirmation = "";
 
+	if( jobsInQueue > 0 ){
+		Job currentJob(Pop());
+		jobsInQueue--;
+		numExecutedJobs++;
+
+		confirmation = "\nJob Status: Executed\nJob Name: " + currentJob.GetName() + "\nTracking Number: " + std::to_string(currentJob.GetTracking()) + "\nNumber of Jobs in Queue: " + std::to_string(jobsInQueue) + "\n";
+	}
+	else{
+		confirmation = "Error: No Jobs in Queue\n";
+	}
+
+	std::cout << confirmation;
 }
 
 // Dispays data of Excuted, Denied, Total Requests
@@ -225,10 +229,10 @@ bool PrintJobs::IsValidName(std::string name)const{
 	return isValid;
 }
 
+// Return true if Queue is Not Full
 bool PrintJobs::IsNotFull() const{
-	return jobsInQueue < MAX_JOBS - 1;
+	return jobsInQueue < MAX_JOBS;
 }
-
 
 // Capitalizes letter unless a number
 std::string PrintJobs::CaptializeStr(std::string lowerStr){
@@ -240,6 +244,7 @@ std::string PrintJobs::CaptializeStr(std::string lowerStr){
 	return newStr;
 }
 
+// Displays Menu 
 int PrintJobs::Menu(){
 	int choice = -1;
 
@@ -253,9 +258,9 @@ int PrintJobs::Menu(){
 
 	std::cin >> choice;
 
-	if(std::cin.fail() || (choice < 0 || choice > 3) ){
+	if( std::cin.fail() || (choice < 0 || choice > 3) ){
 		std::cin.clear();
-		std::cin.ignore(10000, '\n');
+		std::cin.ignore();
 		choice = -1;
 	}
 
